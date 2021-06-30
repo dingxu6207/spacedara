@@ -25,6 +25,7 @@ with fits.open(fits_file, mode="readonly") as hdulist:
 print(fits.info(fits_file))   
 
 print(hdulist[0].header['RA_OBJ'], hdulist[0].header['DEC_OBJ'])
+print(hdulist[0].header)
 plt.figure(0)
 plt.plot(tess_bjds, sap_fluxes)
 #plt.plot(tess_bjds, pdcsap_fluxes)
@@ -58,7 +59,7 @@ ax1.yaxis.set_ticks_position('left') #将y轴的位置设置在右边
 ax1.invert_yaxis() #y轴反向
 #
 #
-S = pyPDM.Scanner(minVal=0.06, maxVal=10, dVal=0.0001, mode="frequency")
+S = pyPDM.Scanner(minVal=1, maxVal=2, dVal=0.0001, mode="frequency")
 P = pyPDM.PyPDM(time, mag2)
 #
 #f1, t1 = P.pdmEquiBinCover(10, 3, S)

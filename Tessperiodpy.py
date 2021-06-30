@@ -18,7 +18,7 @@ def readfits(fits_file):
         tess_bjds = hdulist[1].data['TIME']
         sap_fluxes = hdulist[1].data['SAP_FLUX']
         pdcsap_fluxes = hdulist[1].data['PDCSAP_FLUX']
-        print(len(tess_bjds))
+        print(hdulist[0].header['OBJECT'])
         
         indexflux = np.argwhere(pdcsap_fluxes > 0)
 #        print(sap_fluxes)
