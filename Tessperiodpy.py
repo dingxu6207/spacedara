@@ -20,11 +20,11 @@ def readfits(fits_file):
         pdcsap_fluxes = hdulist[1].data['PDCSAP_FLUX']
         print(len(tess_bjds))
         
-        indexflux = np.argwhere(sap_fluxes > 0)
-        print(sap_fluxes)
+        indexflux = np.argwhere(pdcsap_fluxes > 0)
+#        print(sap_fluxes)
         time = tess_bjds[indexflux]
         time = time.flatten()
-        flux = sap_fluxes[indexflux]
+        flux = pdcsap_fluxes[indexflux]
         flux =  flux.flatten()
         
         return time, flux
@@ -35,9 +35,21 @@ def computeperiod(JDtime, targetflux):
     ls = LombScargle(JDtime, targetflux, normalization='model')
     frequency, power = ls.autopower(minimum_frequency=0.01,maximum_frequency=20)
     index = np.argmax(power)
+    maxpower = np.max(power)
     period = 1/frequency[index]
     wrongP = ls.false_alarm_probability(power.max())
-    return period, wrongP
+    return period, wrongP, maxpower
+
+def computePDM(f0, time, fluxes):
+    mag = -2.5*np.log10(fluxes)
+    mag = mag-np.mean(mag)
+    S = pyPDM.Scanner(minVal=f0-0.01, maxVal=f0+0.01, dVal=0.00001, mode="frequency")
+    P = pyPDM.PyPDM(time, mag)
+    f2, t2 = P.pdmEquiBin(10, S)
+    delta = np.min(t2)
+    pdmp = 1/f2[np.argmin(t2)]
+    return pdmp, delta 
+    
 
 def pholddata(per, times, fluxes):
     mags = -2.5*np.log10(fluxes)
@@ -79,10 +91,18 @@ def zerophse(phases, resultmag):
 
 
 file = 'kplr006852488-2013131215648_llc.fits'
+#file = "https://archive.stsci.edu/missions/tess/tid/s0001/0000/0000/2515/5310/tess2018206045859-s0001-0000000025155310-0120-s_lc.fits"
 tbjd, fluxes = readfits(file)
-comper, wrongP = computeperiod(tbjd, fluxes)
+comper, wrongP, maxpower = computeperiod(tbjd, fluxes)
+pdmp, delta  = computePDM(1/comper, tbjd, fluxes)
 phases, resultmag = pholddata(comper, tbjd, fluxes)
+
 phasemag = zerophse(phases, resultmag)
+
+#t_fit = np.linspace(0, 1)
+#y_fit = ls.model(t_fit, 1/comper)
+#y_fit = -2.5*np.log10(y_fit)
+#y_fit = y_fit-np.mean(y_fit)
 
 plt.figure(0)
 plt.plot(tbjd, fluxes, '.')
