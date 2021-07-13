@@ -19,6 +19,7 @@ def readfits(fits_file):
         sap_fluxes = hdulist[1].data['SAP_FLUX']
         pdcsap_fluxes = hdulist[1].data['PDCSAP_FLUX']
         print(hdulist[0].header['OBJECT'])
+        print(hdulist[0].header['RA_OBJ'], hdulist[0].header['DEC_OBJ'])
         
         indexflux = np.argwhere(pdcsap_fluxes > 0)
 #        print(sap_fluxes)
@@ -37,8 +38,14 @@ def computeperiod(JDtime, targetflux):
     index = np.argmax(power)
     maxpower = np.max(power)
     period = 1/frequency[index]
+#    maxpower = np.max(power)
+#    sortpower = np.sort(power)
+#    index = np.argwhere(power == sortpower[-3])
+#    index = index[0][0]
+#    period = 1/frequency[index]
+    
     wrongP = ls.false_alarm_probability(power.max())
-    return period, wrongP, maxpower
+    return period*1, wrongP, maxpower
 
 def computePDM(f0, time, fluxes):
     mag = -2.5*np.log10(fluxes)
@@ -56,7 +63,7 @@ def pholddata(per, times, fluxes):
     mags = mags-np.mean(mags)
     
     if per<27:
-        lendata = lendata = 2*int((per/27)*len(times))
+        lendata =  int((per/27)*len(times))
     else:
         lendata = len(times)
         
@@ -89,13 +96,18 @@ def zerophse(phases, resultmag):
     
     return phasemag
 
-
-file = 'kplr006852488-2013131215648_llc.fits'
+path = 'I:\\TESSDATA\\section1\\' #tess2018206045859-s0001-0000000025063986-0120-s_lc.fits
+file = 'tess2018206045859-s0001-0000000471016524-0120-s_lc.fits'
 #file = "https://archive.stsci.edu/missions/tess/tid/s0001/0000/0000/2515/5310/tess2018206045859-s0001-0000000025155310-0120-s_lc.fits"
-tbjd, fluxes = readfits(file)
+tbjd, fluxes = readfits(path+file)
 comper, wrongP, maxpower = computeperiod(tbjd, fluxes)
 pdmp, delta  = computePDM(1/comper, tbjd, fluxes)
-phases, resultmag = pholddata(comper, tbjd, fluxes)
+pdmp2, delta2  = computePDM(1/(comper*2), tbjd, fluxes)
+
+if delta < delta2:
+    phases, resultmag = pholddata(comper, tbjd, fluxes)
+else:
+    phases, resultmag = pholddata(comper*2, tbjd, fluxes)
 
 phasemag = zerophse(phases, resultmag)
 
