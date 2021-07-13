@@ -96,8 +96,8 @@ def zerophse(phases, resultmag):
     
     return phasemag
 
-path = 'I:\\TESSDATA\\section1\\' #tess2018206045859-s0001-0000000025063986-0120-s_lc.fits
-file = 'tess2018206045859-s0001-0000000471016524-0120-s_lc.fits'
+path = 'I:\\TESSDATA\\variable\\section1\\' #tess2018206045859-s0001-0000000025063986-0120-s_lc.fits
+file = 'tess2018206045859-s0001-0000000033910322-0120-s_lc.fits'
 #file = "https://archive.stsci.edu/missions/tess/tid/s0001/0000/0000/2515/5310/tess2018206045859-s0001-0000000025155310-0120-s_lc.fits"
 tbjd, fluxes = readfits(path+file)
 comper, wrongP, maxpower = computeperiod(tbjd, fluxes)
