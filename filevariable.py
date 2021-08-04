@@ -52,6 +52,7 @@ def computePDM(f0, time, fluxes):
     pdmp = 1/f2[np.argmin(t2)]
     return pdmp, delta
 
+count = 0
 path = 'I:\\TESSDATA\\section1\\'
 dirpath = 'I:\\TESSDATA\\variable\\section1\\'
 for root, dirs, files in os.walk(path):
@@ -62,7 +63,7 @@ for root, dirs, files in os.walk(path):
            tbjd, fluxes = readfits(strfile)
            comper, wrongP, maxpower = computeperiod(tbjd, fluxes)
            pdmp, delta  = computePDM(1/comper, tbjd, fluxes)
-           
+           count = count+1
            if delta <0.7:
                shutil.copy(strfile,dirpath)
                
