@@ -60,12 +60,42 @@ def computeperiod(JDtime, targetflux):
     wrongP = ls.false_alarm_probability(power.max())
     return period*1, wrongP, maxpower
 
-def computePDM(f0, time, fluxes):
+def computebindata(lendata):
+    if lendata>3000:
+        bindata = int(lendata/100)
+    elif lendata>1000:
+        bindata = int(lendata/14)
+    elif lendata>700:
+        bindata = int(lendata/9)
+    elif lendata>400:
+        bindata = int(lendata/6)
+    elif lendata>200:
+        bindata = int(lendata/3)
+    else:
+        bindata = int(lendata/2)
+    return bindata
+    
+def computePDM(f0, time, fluxes, flag):
+    period = 1.0/f0
+    lendata =  int((period/15)*len(time))
+    fluxes = fluxes[0:lendata]
+    time = time[0:lendata]
+    
     mag = -2.5*np.log10(fluxes)
     mag = mag-np.mean(mag)
     S = pyPDM.Scanner(minVal=f0-0.01, maxVal=f0+0.01, dVal=0.00001, mode="frequency")
     P = pyPDM.PyPDM(time, mag)
-    f2, t2 = P.pdmEquiBin(60, S)
+    
+    lendata = len(mag)
+    if flag == 1:
+        bindata = computebindata(lendata)
+    elif flag == 2:
+        bindata = computebindata(lendata/2)
+    
+    print(bindata)
+    #bindata = 500
+    f2, t2 = P.pdmEquiBin(bindata, S)
+    #f2, t2 = P.pdmEquiBin(80, S)
     delta = np.min(t2)
     pdmp = 1/f2[np.argmin(t2)]
     return pdmp, delta 
@@ -74,12 +104,9 @@ def computePDM(f0, time, fluxes):
 def pholddata(per, times, fluxes):
     mags = -2.5*np.log10(fluxes)
     mags = mags-np.mean(mags)
-    
-    if per<27:
-        lendata =  int((per/25)*len(times))
-    else:
-        lendata = len(times)
-        
+      
+    lendata =  int((per/15)*len(times))
+      
     time = times[0:lendata]
     mag = mags[0:lendata]
     phases = foldAt(time, per)
@@ -109,13 +136,13 @@ def zerophse(phases, resultmag):
     
     return phasemag
 
-path = 'I:\\TESSDATA\\variable\\section1\\' #tess2018206045859-s0001-0000000025063986-0120-s_lc.fits
-file = 'tess2018206045859-s0001-0000000139699256-0120-s_lc.fits'
+path = 'I:\\TESSDATA\\section1\\' #tess2018206045859-s0001-0000000025063986-0120-s_lc.fits
+file = 'tess2018206045859-s0001-0000000089428764-0120-s_lc.fits'
 #file = "https://archive.stsci.edu/missions/tess/tid/s0001/0000/0000/2515/5310/tess2018206045859-s0001-0000000025155310-0120-s_lc.fits"
 tbjd, fluxes = readfits(path+file)
 comper, wrongP, maxpower = computeperiod(tbjd, fluxes)
-pdmp, delta  = computePDM(1/comper, tbjd, fluxes)
-pdmp2, delta2  = computePDM(1/(comper*2), tbjd, fluxes)
+pdmp, delta  = computePDM(1/comper, tbjd, fluxes, 1)
+pdmp2, delta2  = computePDM(1/(comper*2), tbjd, fluxes, 2)
 
 delm = np.abs(delta-delta2)
 if (delta < delta2):
@@ -124,7 +151,10 @@ else:
     phases, resultmag = pholddata(comper*2, tbjd, fluxes)
 
 phasemag = zerophse(phases, resultmag)
-index = classfiydata(phasemag)
+if delta < 0.5 and comper<15:
+    index = classfiydata(phasemag)
+else:
+    index = 5
 #t_fit = np.linspace(0, 1)
 #y_fit = ls.model(t_fit, 1/comper)
 #y_fit = -2.5*np.log10(y_fit)

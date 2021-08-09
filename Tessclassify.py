@@ -67,7 +67,7 @@ def zerophse(phases, resultmag):
 def computeperiod(JDtime, targetflux):
    
     ls = LombScargle(JDtime, targetflux, normalization='model')
-    frequency, power = ls.autopower(minimum_frequency=0.01,maximum_frequency=20)
+    frequency, power = ls.autopower(minimum_frequency=0.04,maximum_frequency=20)
     index = np.argmax(power)
     maxpower = np.max(power)
     period = 1/frequency[index]
@@ -75,11 +75,17 @@ def computeperiod(JDtime, targetflux):
     return period, wrongP, maxpower
 
 def computePDM(f0, time, fluxes):
+    period = 1/f0
+    lendata =  int((period/15)*len(time))
+    fluxes = fluxes[0:lendata]
+    time = time[0:lendata]
     mag = -2.5*np.log10(fluxes)
     mag = mag-np.mean(mag)
     S = pyPDM.Scanner(minVal=f0-0.01, maxVal=f0+0.01, dVal=0.00001, mode="frequency")
     P = pyPDM.PyPDM(time, mag)
-    f2, t2 = P.pdmEquiBin(60, S)
+    bindata = int(len(mag)/20)
+    #bindata = 100
+    f2, t2 = P.pdmEquiBin(bindata, S)
     delta = np.min(t2)
     pdmp = 1/f2[np.argmin(t2)]
     return pdmp, delta
@@ -88,11 +94,8 @@ def pholddata(per, times, fluxes):
     mags = -2.5*np.log10(fluxes)
     mags = mags-np.mean(mags)
     
-    if per<27:
-        lendata =  int((per/25)*len(times))
-    else:
-        lendata = len(times)
-        
+    lendata =  int((per/15)*len(times))
+     
     time = times[0:lendata]
     mag = mags[0:lendata]
     phases = foldAt(time, per)
@@ -102,12 +105,13 @@ def pholddata(per, times, fluxes):
     return phases, resultmag
 
 path = 'I:\\TESSDATA\\section1\\'
-bydrapath = 'I:\\TESSDATA\\sectionvariable\\BYDra\\'
-dsctpath = 'I:\\TESSDATA\\sectionvariable\\DSCT\\'
-eapath = 'I:\\TESSDATA\\sectionvariable\\EA\\'
-ewpath = 'I:\\TESSDATA\\sectionvariable\\EW\\'
-rrpath = 'I:\\TESSDATA\\sectionvariable\\RR\\'
-srpath = 'I:\\TESSDATA\\sectionvariable\\SR\\'
+bydrapath = 'I:\\TESSDATA\\section1variable\\BYDra\\'
+dsctpath = 'I:\\TESSDATA\\section1variable\\DSCT\\'
+eapath = 'I:\\TESSDATA\\section1variable\\EA\\'
+ewpath = 'I:\\TESSDATA\\section1variable\\EW\\'
+rrpath = 'I:\\TESSDATA\\section1variable\\RR\\'
+srpath = 'I:\\TESSDATA\\section1variable\\SR\\'
+nopath = 'I:\\TESSDATA\\section1variable\\NONE\\'
 count = 0
 for root, dirs, files in os.walk(path):
    for file in files:
@@ -121,7 +125,7 @@ for root, dirs, files in os.walk(path):
            
                comper, wrongP, maxpower = computeperiod(tbjd, fluxes)
                pdmp, delta  = computePDM(1/comper, tbjd, fluxes)
-               if delta <0.5:
+               if delta <0.5 and pdmp < 15:
                    pdmp2, delta2  = computePDM(1/(comper*2), tbjd, fluxes)
            
                    if (delta < delta2):
@@ -149,6 +153,12 @@ for root, dirs, files in os.walk(path):
     
                    if index == 5:
                        shutil.copy(strfile,srpath)
+                       
+               elif delta < 0.5 and pdmp > 15:
+                   shutil.copy(strfile,srpath)
+               else:
+                   shutil.copy(strfile,nopath)
+                    
        except:
               continue
 
