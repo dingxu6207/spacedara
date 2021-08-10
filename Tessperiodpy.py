@@ -19,7 +19,7 @@ def classfiydata(phasemag):
     sy1 = np.interp(sx1, phasemag[:,0], phasemag[:,1])
     nparraydata = np.reshape(sy1,(1,100))
     prenpdata = model.predict(nparraydata)
-
+    print(prenpdata)
     index = np.argmax(prenpdata[0])
     print(index)
     return index
@@ -61,12 +61,11 @@ def computeperiod(JDtime, targetflux):
     return period*1, wrongP, maxpower
 
 def computebindata(lendata):
-    if lendata>3000:
+    
+    if lendata>5000:
         bindata = int(lendata/100)
-    elif lendata>1000:
-        bindata = int(lendata/14)
-    elif lendata>700:
-        bindata = int(lendata/9)
+    elif lendata>3000:
+        bindata = int(lendata/10)
     elif lendata>400:
         bindata = int(lendata/6)
     elif lendata>200:
@@ -86,11 +85,12 @@ def computePDM(f0, time, fluxes, flag):
     S = pyPDM.Scanner(minVal=f0-0.01, maxVal=f0+0.01, dVal=0.00001, mode="frequency")
     P = pyPDM.PyPDM(time, mag)
     
-    lendata = len(mag)
+    lenmag = len(mag)
+    print(lendata)
     if flag == 1:
-        bindata = computebindata(lendata)
+        bindata = computebindata(lenmag)
     elif flag == 2:
-        bindata = computebindata(lendata/2)
+        bindata = computebindata(lenmag/2)
     
     print(bindata)
     #bindata = 500
@@ -137,7 +137,7 @@ def zerophse(phases, resultmag):
     return phasemag
 
 path = 'I:\\TESSDATA\\section1\\' #tess2018206045859-s0001-0000000025063986-0120-s_lc.fits
-file = 'tess2018206045859-s0001-0000000089428764-0120-s_lc.fits'
+file = 'tess2018206045859-s0001-0000000091448148-0120-s_lc.fits'
 #file = "https://archive.stsci.edu/missions/tess/tid/s0001/0000/0000/2515/5310/tess2018206045859-s0001-0000000025155310-0120-s_lc.fits"
 tbjd, fluxes = readfits(path+file)
 comper, wrongP, maxpower = computeperiod(tbjd, fluxes)

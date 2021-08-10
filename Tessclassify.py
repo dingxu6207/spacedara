@@ -74,7 +74,22 @@ def computeperiod(JDtime, targetflux):
     wrongP = ls.false_alarm_probability(power.max())
     return period, wrongP, maxpower
 
-def computePDM(f0, time, fluxes):
+
+def computebindata(lendata):
+    
+    if lendata>5000:
+        bindata = int(lendata/100)
+    elif lendata>3000:
+        bindata = int(lendata/10)
+    elif lendata>400:
+        bindata = int(lendata/6)
+    elif lendata>200:
+        bindata = int(lendata/3)
+    else:
+        bindata = int(lendata/2)
+    return bindata
+
+def computePDM(f0, time, fluxes, flag):
     period = 1/f0
     lendata =  int((period/15)*len(time))
     fluxes = fluxes[0:lendata]
@@ -83,8 +98,14 @@ def computePDM(f0, time, fluxes):
     mag = mag-np.mean(mag)
     S = pyPDM.Scanner(minVal=f0-0.01, maxVal=f0+0.01, dVal=0.00001, mode="frequency")
     P = pyPDM.PyPDM(time, mag)
-    bindata = int(len(mag)/20)
+    #bindata = int(len(mag)/20)
     #bindata = 100
+    lenmag = len(mag)
+    if flag == 1:
+        bindata = computebindata(lenmag)
+    elif flag == 2:
+        bindata = computebindata(lenmag/2)
+        
     f2, t2 = P.pdmEquiBin(bindata, S)
     delta = np.min(t2)
     pdmp = 1/f2[np.argmin(t2)]
@@ -124,9 +145,9 @@ for root, dirs, files in os.walk(path):
                print('it is time'+str(count))
            
                comper, wrongP, maxpower = computeperiod(tbjd, fluxes)
-               pdmp, delta  = computePDM(1/comper, tbjd, fluxes)
+               pdmp, delta  = computePDM(1/comper, tbjd, fluxes, 1)
                if delta <0.5 and pdmp < 15:
-                   pdmp2, delta2  = computePDM(1/(comper*2), tbjd, fluxes)
+                   pdmp2, delta2  = computePDM(1/(comper*2), tbjd, fluxes, 2)
            
                    if (delta < delta2):
                        phases, resultmag = pholddata(comper, tbjd, fluxes)
@@ -139,7 +160,7 @@ for root, dirs, files in os.walk(path):
                    if index == 0:
                        shutil.copy(strfile,bydrapath)
     
-                   if index == 1:
+                   if index == 1 and comper<0.5:
                        shutil.copy(strfile,dsctpath)
 
                    if index == 2:
@@ -151,13 +172,13 @@ for root, dirs, files in os.walk(path):
                    if index == 4:
                        shutil.copy(strfile,rrpath)
     
-                   if index == 5:
+                   if index == 5 or (index == 1 and comper>0.5):
                        shutil.copy(strfile,srpath)
                        
                elif delta < 0.5 and pdmp > 15:
                    shutil.copy(strfile,srpath)
-               else:
-                   shutil.copy(strfile,nopath)
+#               else:
+#                   shutil.copy(strfile,nopath)
                     
        except:
               continue
