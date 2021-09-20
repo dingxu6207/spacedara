@@ -160,7 +160,7 @@ for root, dirs, files in os.walk(path):
                    if index == 0:
                        shutil.copy(strfile,bydrapath)
     
-                   if index == 1 and comper<0.5:
+                   if index == 1 and comper<0.2:
                        shutil.copy(strfile,dsctpath)
 
                    if index == 2:
